@@ -14,6 +14,7 @@ junit = "4.13.2"
 kotlin = "2.4.10"
 kotlin-wrappers = "2026.8.4"
 kotlinx-coroutines = "1.11.0"
+kotlinx-serialization = "1.11.0"
 ktor = "3.5.2"
 logback = "1.6.3"
 material3 = "1.11.0-alpha07"
@@ -39,10 +40,25 @@ compose-ui = { module = "org.jetbrains.compose.ui:ui", version.ref = "composeMul
 compose-components-resources = { module = "org.jetbrains.compose.components:components-resources", version.ref = "composeMultiplatform" }
 compose-uiToolingPreview = { module = "org.jetbrains.compose.ui:ui-tooling-preview", version.ref = "composeMultiplatform" }
 kotlinx-coroutinesSwing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-swing", version.ref = "kotlinx-coroutines" }
+kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
 logback = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
-ktor-serverCore = { module = "io.ktor:ktor-server-core-jvm", version.ref = "ktor" }
-ktor-serverNetty = { module = "io.ktor:ktor-server-netty-jvm", version.ref = "ktor" }
-ktor-serverTestHost = { module = "io.ktor:ktor-server-test-host-jvm", version.ref = "ktor" }
+
+# Ktor server (:server, artefactos -jvm)
+ktor-serverCore = { module = "io.ktor:ktor-server-core-jvm", version.ref = "ktor" } # pipeline, routing, Application
+ktor-serverNetty = { module = "io.ktor:ktor-server-netty-jvm", version.ref = "ktor" } # motor HTTP del server
+ktor-serverTestHost = { module = "io.ktor:ktor-server-test-host-jvm", version.ref = "ktor" } # testApplication {}
+
+# Ktor client (commonMain de :app:shared) — API REST del cliente tonto
+ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" } # HttpClient y API común KMP
+ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" } # plugin que serializa/deserializa el body
+ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktor" } # convertidor JSON (kotlinx.serialization) para client y también usable en server KMP
+
+# Engines Ktor client (uno por target; sin engine HttpClient no habla con la red)
+ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "ktor" } # Android (y JVM si se prefiere OkHttp)
+ktor-client-cio = { module = "io.ktor:ktor-client-cio", version.ref = "ktor" } # Desktop / jvmMain (CIO = Coroutine I/O)
+ktor-client-js = { module = "io.ktor:ktor-client-js", version.ref = "ktor" } # Web JS (browser)
+ktor-client-cio-wasm-js = { module = "io.ktor:ktor-client-cio-wasm-js", version.ref = "ktor" } # Web Wasm
+ktor-client-darwin = { module = "io.ktor:ktor-client-darwin", version.ref = "ktor" } # iOS (el target sigue compilando aunque no haya app)
 wrappers-browser = { module = "org.jetbrains.kotlin-wrappers:kotlin-browser", version.ref = "kotlin-wrappers" }
 sqldelight-sqliteDriver = { module = "app.cash.sqldelight:sqlite-driver", version.ref = "sqlDelight" }
 
@@ -53,6 +69,7 @@ composeMultiplatform = { id = "org.jetbrains.compose", version.ref = "composeMul
 composeCompiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlinJvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+kotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 ktor = { id = "io.ktor.plugin", version.ref = "ktor" }
 metro = { id = "dev.zacsweers.metro", version.ref = "metro" }
 sqldelight = { id = "app.cash.sqldelight", version.ref = "sqlDelight" }
