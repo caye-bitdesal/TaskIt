@@ -1,0 +1,384 @@
+{
+  "feature_name": "Task Manager",
+  "feature_slug": "task-manager",
+  "parent_package": "com.bitdesal.taskit",
+  "scaffold": "TaskItScaffold",
+  "summary": "Kanban de tareas y CRUDL de releases en KMP (Ktor + SQLDelight en el server; Android, Web y Desktop tontos vía REST). Sin iOS. Columnas fijas: To-Do, Selected, In Progress, Ready, Done.",
+  "overview": "TaskIt es un gestor pequeño: el **server** es la fuente de verdad (SQLite con SQLDelight, Metro, REST). Los clientes Compose Multiplatform **solo presentan** lo que devuelve la API.\n\n**Dominio**\n- **Release:** `id`, `name` (obligatorio), `notes` (opcional).\n- **Task:** `id`, `title` (obligatorio), `description` (opcional), `status`, `releaseId` (opcional). Sin personas ni avatares.\n- **Status:** `TODO` | `SELECTED` | `IN_PROGRESS` | `READY` | `DONE`.\n\n**Reglas del board**\n- **To-Do:** tareas **sin** release. El filtro All / una release **no** las oculta.\n- **Selected:** tienen release y `status == SELECTED`. Filtro All = todas esas; una release = solo esa.\n- **In Progress / Ready / Done:** ese `status` + filtro de release (All = cualquiera con release).\n- Crear tarea → `releaseId` null → To-Do. Asignar release en el editor → `status = SELECTED`.\n- No se puede mover a In Progress / Ready / Done sin release.\n- Quitar la release en el editor → vuelve a To-Do (`status = TODO`, `releaseId = null`).\n- Borrar una release que aún tiene tickets → **409**.\n\n**UI (después del server)**\n- Sin sidebar. Una pantalla a la vez. Sin diálogos excepto `TaskActionDialog`.\n- Top bar: título, botón **Releases**, **Nueva release** (solo en la lista de releases), toggle **claro/oscuro** (sigue el sistema + override).\n- Board: 5 columnas; en ancho estrecho scroll horizontal. FAB **Nueva tarea**.\n- Card: título + nombre de la release. Tap corto → diálogo Mover / Editar / Borrar. Long-press: nada. Borrar inmediato.\n- Editores a **pantalla llena** (tarea y release).\n- Loading centrado, error + Retry, columnas vacías \"No tasks\", lista vacía \"No releases\".\n\n**Plataformas:** `:server`, `:app:androidApp`, `:app:webApp`, `:app:desktopApp` compartiendo `:app:shared`. No implementar iOS.\n\n**Orden de implementación:** primero **todo el server** (modelos, SQLDelight, Metro, endpoints, tests). Luego capa HTTP del cliente. Luego UI por feature (shell → board → editor de tarea → releases).",
+  "images": [
+    {
+      "kind": "mockup",
+      "caption": "Referencia Jira Kanban (light). TaskIt es una versión simplificada: sin sidebar, sin avatares, sin labels/epics, columnas fijas distintas, sin drag-and-drop.",
+      "path": "images/mockup-jira-kanban.png"
+    },
+    {
+      "kind": "mockup",
+      "caption": "Misma referencia en dark mode. TaskIt sigue el sistema y permite override claro/oscuro en la top bar.",
+      "path": "images/mockup-jira-kanban-dark.png"
+    }
+  ],
+  "components": [
+    {
+      "name": "App",
+      "location": "app/shared/src/commonMain/kotlin/com/bitdesal/taskit/App.kt",
+      "decision": "modify",
+      "usage": "Punto de entrada Compose: tema (sistema + override), createGraph AppGraph, navegación sealed a una pantalla a la vez.",
+      "notes": "Quitar el hello-world (Click me / greeting)."
+    },
+    {
+      "name": "Material3 widgets",
+      "location": "androidx.compose.material3",
+      "decision": "reuse",
+      "usage": "TopAppBar, Button, Text, Card, TextField, DropdownMenu, FloatingActionButton, IconButton, CircularProgressIndicator, AlertDialog (solo TaskActionDialog).",
+      "notes": "No hay design system propio."
+    },
+    {
+      "name": "TaskItScaffold",
+      "location": "app/shared/src/commonMain/kotlin/com/bitdesal/taskit/ui/TaskItScaffold.kt",
+      "decision": "create",
+      "usage": "Scaffold compartido: TopAppBar con título, acción Releases, toggle tema, slot extra de acciones (Nueva release), content.",
+      "notes": "Sin bottom bar. El FAB de nueva tarea no vive aquí; está en BoardScreen."
+    },
+    {
+      "name": "ThemeToggleButton",
+      "location": "app/shared/src/commonMain/kotlin/com/bitdesal/taskit/ui/ThemeToggleButton.kt",
+      "decision": "create",
+      "usage": "IconButton en la top bar, al lado de Releases, cicla override claro/oscuro (o vuelve a sistema si se acuerda un tercer toque; mínimo: light/dark override).",
+      "notes": "El override puede ser solo en memoria de sesión."
+    },
+    {
+      "name": "BoardScreen",
+      "location": "app/shared/src/commonMain/kotlin/com/bitdesal/taskit/ui/board/BoardScreen.kt",
+      "decision": "create",
+      "usage": "Pantalla inicio: filtro All/release en top bar (vía scaffold actions o fila bajo la bar), 5 BoardColumn, FAB Nueva tarea, loading/error.",
+      "notes": "Package com.bitdesal.taskit.ui.board"
+    },
+    {
+      "name": "BoardColumn",
+      "location": "app/shared/src/commonMain/kotlin/com/bitdesal/taskit/ui/board/BoardColumn.kt",
+      "decision": "create",
+      "usage": "Una columna: header (nombre + contador) + lista vertical de TaskCard o \"No tasks\".",
+      "notes": ""
+    },
+    {
+      "name": "TaskCard",
+      "location": "app/shared/src/commonMain/kotlin/com/bitdesal/taskit/ui/board/TaskCard.kt",
+      "decision": "create",
+      "usage": "Título + nombre de release (u oculto si no hay). Tap corto abre TaskActionDialog. Long-press no hace nada.",
+      "notes": "Sin avatar, sin labels."
+    },
+    {
+      "name": "TaskActionDialog",
+      "location": "app/shared/src/commonMain/kotlin/com/bitdesal/taskit/ui/board/TaskActionDialog.kt",
+      "decision": "create",
+      "usage": "Único diálogo: acciones Mover (estados válidos), Editar, Borrar. Borrar es inmediato.",
+      "notes": "To-Do: no ofrecer move a IN_PROGRESS/READY/DONE. Editar navega a TaskEditorScreen."
+    },
+    {
+      "name": "TaskEditorScreen",
+      "location": "app/shared/src/commonMain/kotlin/com/bitdesal/taskit/ui/task/TaskEditorScreen.kt",
+      "decision": "create",
+      "usage": "Pantalla llena crear/editar: title, description, status, release. Guardar. Eliminar solo en edición.",
+      "notes": "Package com.bitdesal.taskit.ui.task. No diálogo."
+    },
+    {
+      "name": "ReleaseListScreen",
+      "location": "app/shared/src/commonMain/kotlin/com/bitdesal/taskit/ui/release/ReleaseListScreen.kt",
+      "decision": "create",
+      "usage": "Lista de releases (nombre + notes). Tap → editor. Vacío: No releases.",
+      "notes": "Package com.bitdesal.taskit.ui.release"
+    },
+    {
+      "name": "ReleaseEditorScreen",
+      "location": "app/shared/src/commonMain/kotlin/com/bitdesal/taskit/ui/release/ReleaseEditorScreen.kt",
+      "decision": "create",
+      "usage": "Pantalla llena: name, notes, Guardar, Eliminar (solo edición). 409 si hay tickets.",
+      "notes": "No diálogo."
+    }
+  ],
+  "structure": "Una pantalla a la vez dentro de `TaskItScaffold`.\n\n**Top bar (siempre)**\n- Título de la pantalla actual\n- Botón **Releases** (navega a la lista; en la lista puede ser atrás o quedarse)\n- **ThemeToggleButton**\n- En `ReleaseListScreen` además: acción **Nueva release** (no FAB)\n\n**Pantallas**\n1. `BoardScreen` — `Row` de 5 `BoardColumn` (`TODO`, `SELECTED`, `IN_PROGRESS`, `READY`, `DONE`). En móvil/estrecho: `horizontalScroll`. Cada columna hace scroll vertical propio. FAB Nueva tarea.\n2. `ReleaseListScreen` — `LazyColumn`.\n3. `ReleaseEditorScreen` — formulario a pantalla llena.\n4. `TaskEditorScreen` — formulario a pantalla llena.\n\nNavegación: `sealed` de rutas + `when` en `App`. Sin iOS.",
+  "sections": [
+    {
+      "title": "Server — dominio y persistencia",
+      "description": "DTOs en `:core`. Tablas SQLDelight solo en `:server` (SQLite). Repos `@Inject` + `ServerGraph` Metro.",
+      "behavior": "El server arranca, abre/crea la DB, sirve REST. Reiniciar el proceso conserva datos (fichero SQLite).",
+      "components": []
+    },
+    {
+      "title": "Server — API",
+      "description": "Rutas Ktor JSON para releases y tasks. CORS local. Validación 400/404/409.",
+      "behavior": "Clientes tontos. Sin auth.",
+      "components": []
+    },
+    {
+      "title": "Top bar / shell",
+      "description": "TaskItScaffold + ThemeToggleButton + navegación. App deja de ser el hello-world.",
+      "behavior": "Tema: colorScheme del sistema; el toggle fuerza light u dark en sesión. Releases abre la lista.",
+      "components": ["App", "TaskItScaffold", "ThemeToggleButton", "Material3 widgets"]
+    },
+    {
+      "title": "Board",
+      "description": "5 columnas, filtro All + una release (selector). Cards con título y nombre de release.",
+      "behavior": "To-Do ignora el filtro. Tap → TaskActionDialog. FAB → TaskEditorScreen (crear). Loading/error/empty por columna.",
+      "components": ["BoardScreen", "BoardColumn", "TaskCard", "TaskActionDialog"]
+    },
+    {
+      "title": "Task editor",
+      "description": "Pantalla llena con title, description, status, release.",
+      "behavior": "Crear: POST. Editar: PATCH. Eliminar: DELETE inmediato. Title vacío no guarda. Asignar release pone SELECTED; quitar release pone TODO.",
+      "components": ["TaskEditorScreen"]
+    },
+    {
+      "title": "Releases",
+      "description": "Lista + editor a pantalla llena.",
+      "behavior": "Nueva release desde top bar. Name vacío no guarda. Delete con tickets: mostrar error (409), no navegar atrás.",
+      "components": ["ReleaseListScreen", "ReleaseEditorScreen"]
+    }
+  ],
+  "endpoints": [
+    {
+      "name": "List releases",
+      "method": "GET",
+      "path": "/releases",
+      "notes": "Picker del board y ReleaseListScreen."
+    },
+    {
+      "name": "Create release",
+      "method": "POST",
+      "path": "/releases",
+      "notes": "Body: { name, notes? }. 400 si name vacío."
+    },
+    {
+      "name": "Get release",
+      "method": "GET",
+      "path": "/releases/{id}",
+      "notes": "404 si no existe."
+    },
+    {
+      "name": "Update release",
+      "method": "PATCH",
+      "path": "/releases/{id}",
+      "notes": "Campos opcionales name, notes."
+    },
+    {
+      "name": "Delete release",
+      "method": "DELETE",
+      "path": "/releases/{id}",
+      "notes": "204 si ok. 409 si hay tasks con ese releaseId. 404 si no existe."
+    },
+    {
+      "name": "List tasks",
+      "method": "GET",
+      "path": "/tasks",
+      "notes": "Query opcional releaseId, status. El board puede listar todas y agrupar en cliente, o usar queries; documentar una: GET /tasks (todas) y filtrar en cliente según reglas de columna + filtro UI."
+    },
+    {
+      "name": "Create task",
+      "method": "POST",
+      "path": "/tasks",
+      "notes": "Body: { title, description?, status?, releaseId? }. Default status TODO si no hay release; si viene releaseId, status default SELECTED. 400 title vacío. 404 releaseId inexistente."
+    },
+    {
+      "name": "Get task",
+      "method": "GET",
+      "path": "/tasks/{id}",
+      "notes": "404 si no existe."
+    },
+    {
+      "name": "Update task",
+      "method": "PATCH",
+      "path": "/tasks/{id}",
+      "notes": "title, description, status, releaseId (null para desasignar). Rechazar 400 si status es IN_PROGRESS|READY|DONE y releaseId queda null. Al asignar release y status omitido, poner SELECTED. Al poner releaseId null, forzar status TODO."
+    },
+    {
+      "name": "Delete task",
+      "method": "DELETE",
+      "path": "/tasks/{id}",
+      "notes": "204. 404 si no existe."
+    }
+  ],
+  "persistence": "**SQLDelight + SQLite solo en `:server`.** El cliente no cachea (ni Room ni SQLDelight).\n\nTablas:\n- `Release(id TEXT PK, name TEXT NOT NULL, notes TEXT)`\n- `Task(id TEXT PK, title TEXT NOT NULL, description TEXT, status TEXT NOT NULL, releaseId TEXT REFERENCES Release(id), createdAt TEXT, updatedAt TEXT)`\n\nFichero SQLite en el working dir del server (p. ej. `taskit.db`). Metro: `ServerGraph` provee `SqlDriver` / DB y repos `@SingleIn(ServerScope)`.\n\nTema del cliente: override light/dark **en memoria de sesión**; no persistir.",
+  "tasks": [
+    {
+      "id": "T1",
+      "title": "DTOs y enums compartidos en :core",
+      "spec": "En `:core` commonMain, paquete `com.bitdesal.taskit.domain` (y/o `api`), añade kotlinx.serialization al módulo si hace falta.\n\nTipos:\n- `enum class TaskStatus { TODO, SELECTED, IN_PROGRESS, READY, DONE }` con serialización al nombre del enum.\n- `data class ReleaseDto(id, name, notes: String?)`\n- `data class TaskDto(id, title, description: String?, status: TaskStatus, releaseId: String?, createdAt, updatedAt)`\n- Request bodies: `CreateReleaseRequest`, `PatchReleaseRequest`, `CreateTaskRequest`, `PatchTaskRequest`.\n- `data class ErrorBody(error: String)`.\n\nNo pongas Metro ni SQLDelight en `:core`. No UI.",
+      "acceptance_criteria": [
+        ":core compila para los targets que ya tiene",
+        "TaskStatus y DTOs son serializables",
+        "releaseId es nullable en TaskDto y Create/Patch task"
+      ],
+      "dependencies": [],
+      "components": []
+    },
+    {
+      "id": "T2",
+      "title": "SQLDelight en :server (esquema y queries)",
+      "spec": "Añade el plugin y dependencias SQLDelight (dialect SQLite, driver JDBC) solo en `:server`.\n\nCrea el esquema:\n- Release: id, name, notes\n- Task: id, title, description, status, releaseId (nullable FK), createdAt, updatedAt\n\nQueries: selectAll / selectById / insert / update / delete para ambas tablas; tasksByReleaseId; countTasksByReleaseId (para el 409).\n\nGenera el código y deja un punto único para crear el driver (fichero `taskit.db`). Aún no hace falta Ktor ni Metro.",
+      "acceptance_criteria": [
+        ":server compila con las queries generadas",
+        "releaseId de Task es nullable",
+        "Existe query para contar tasks de una release"
+      ],
+      "dependencies": ["T1"],
+      "components": []
+    },
+    {
+      "id": "T3",
+      "title": "Repos y ServerGraph Metro",
+      "spec": "El plugin Metro ya está en `:server`. Crea `ServerScope`, `ServerGraph` `@DependencyGraph(ServerScope::class)`.\n\n`@Provides` del `SqlDriver` / database en un `@BindingContainer`.\n`@Inject` + `@SingleIn(ServerScope)` repos que envuelven SQLDelight: `ReleaseRepository`, `TaskRepository` (interfaces + impl, `@Binds`).\n\nGenera ids (UUID o similar). Mapea filas ↔ DTOs de `:core`.\n\n`Application.module()` hace `createGraph<ServerGraph>()` (aún puedes no registrar rutas de negocio).",
+      "acceptance_criteria": [
+        "createGraph<ServerGraph>() compila y arranca",
+        "Los repos pueden insertar/leer en tests o en un smoke mínimo",
+        "No hay new SqlDriver fuera del container Metro"
+      ],
+      "dependencies": ["T2"],
+      "components": []
+    },
+    {
+      "id": "T4",
+      "title": "Endpoints CRUDL de releases",
+      "spec": "Ktor: ContentNegotiation JSON (kotlinx.serialization), CORS permisivo en local, StatusPages.\n\n`@Inject class ReleaseRoutes` registrado desde el grafo.\n\n- GET /releases\n- POST /releases — 400 si name blank\n- GET /releases/{id} — 404\n- PATCH /releases/{id}\n- DELETE /releases/{id} — 204; **409** si countTasksByReleaseId > 0; 404 si no existe\n\nNo implementes /tasks en esta task.",
+      "acceptance_criteria": [
+        "CRUDL de releases funciona (curl o tests)",
+        "DELETE con tasks asociadas responde 409",
+        "name vacío responde 400"
+      ],
+      "dependencies": ["T3"],
+      "components": []
+    },
+    {
+      "id": "T5",
+      "title": "Endpoints CRUDL de tasks y reglas de estado/release",
+      "spec": "`@Inject class TaskRoutes`:\n\n- GET /tasks — query opcional `releaseId`, `status`\n- POST /tasks — title obligatorio; releaseId opcional (404 si no existe); si no hay release → status TODO; si hay release y no mandan status → SELECTED; rechazar 400 si status IN_PROGRESS|READY|DONE sin release\n- GET /tasks/{id}\n- PATCH /tasks/{id} — mismos invariantes; releaseId null → status TODO; asignar release sin status → SELECTED\n- DELETE /tasks/{id} — 204\n\nQuita o deja de usar GET / hello de plantilla si estorba.",
+      "acceptance_criteria": [
+        "Se puede crear una task sin release y sale como TODO",
+        "Asignar release la deja en SELECTED",
+        "PATCH a IN_PROGRESS sin release es 400",
+        "releaseId inexistente es 404"
+      ],
+      "dependencies": ["T4"],
+      "components": []
+    },
+    {
+      "id": "T6",
+      "title": "Tests del server (API + persistencia)",
+      "spec": "En `:server` testHost: cubre releases CRUDL, 409 al borrar release con tasks, tasks CRUDL, filtros query, invariantes de status/release, 400/404.\nUsa una DB temporal (memoria o fichero de test) vía grafo de test o driver de test. `./gradlew :server:test` verde.",
+      "acceptance_criteria": [
+        "./gradlew :server:test pasa",
+        "Hay tests de 409, 400 title/name, y move ilegal sin release"
+      ],
+      "dependencies": ["T5"],
+      "components": []
+    },
+    {
+      "id": "T7",
+      "title": "Cliente HTTP tonto + AppGraph Metro",
+      "spec": "Aplica Metro en `:app:shared` si aún no está. `AppGraph` + `NetworkBindings`: Json, HttpClient Ktor, `@Named(\"baseUrl\")` (Desktop/Web `http://127.0.0.1:8080`, Android emulator `http://10.0.2.2:8080`).\n\n`@Inject` `TaskApi` / `ReleaseApi` o un `TaskRepository`/`ReleaseRepository` de cliente que solo llama REST y devuelve DTOs de `:core`. Sin cache.\n\nAñade dependencias Ktor client + serialization en shared. No construyas pantallas. Un accessor del grafo basta para un smoke (p. ej. `val releaseRepository`).",
+      "acceptance_criteria": [
+        "shared compila (al menos jvm/android)",
+        "createGraph<AppGraph>() resuelve el cliente HTTP",
+        "No hay persistencia en el cliente"
+      ],
+      "dependencies": ["T1"],
+      "components": []
+    },
+    {
+      "id": "T8",
+      "title": "TaskItScaffold, tema y navegación vacía",
+      "spec": "Crea `TaskItScaffold` y `ThemeToggleButton`. Modify `App`: MaterialTheme según sistema + override light/dark en memoria; `createGraph<AppGraph>()`; sealed routes (Board, ReleaseList, ReleaseEditor, TaskEditor) con `when`.\nPor ahora Board y el resto pueden ser placeholders (`Text`) dentro del scaffold. Botón Releases cambia a ReleaseList. Toggle cambia el colorScheme. Sin iOS nuevo.",
+      "acceptance_criteria": [
+        "Desktop/Android abre App sin el hello-world",
+        "Releases y el toggle están en la top bar",
+        "Solo se ve una pantalla a la vez"
+      ],
+      "dependencies": ["T7"],
+      "components": ["App", "TaskItScaffold", "ThemeToggleButton", "Material3 widgets"]
+    },
+    {
+      "id": "T9",
+      "title": "Board estático: columnas y TaskCard",
+      "spec": "Crea `BoardScreen`, `BoardColumn`, `TaskCard` con datos fake en memoria (varias tasks, algunas sin release).\n5 columnas fijas, header + contador, card = título + nombre release. Row + horizontalScroll en ancho estrecho. FAB visible (aún no navega). No llamés a la API. Long-press: no-op. Tap: no-op o toast opcional.",
+      "acceptance_criteria": [
+        "Se ven 5 columnas To-Do, Selected, In Progress, Ready, Done",
+        "Las cards muestran título y release cuando hay",
+        "Layout usable en desktop y en ancho estrecho"
+      ],
+      "dependencies": ["T8"],
+      "components": ["BoardScreen", "BoardColumn", "TaskCard"]
+    },
+    {
+      "id": "T10",
+      "title": "Board conectado: carga, filtro All/release, estados",
+      "spec": "`BoardViewModel` `@Inject` (accessor en AppGraph). GET /tasks y GET /releases. Agrupa con las reglas de columnas. Selector All + una release en la UI del board.\nLoading / error+Retry / No tasks por columna. To-Do no se filtra por release.",
+      "acceptance_criteria": [
+        "Con el server arriba, el board muestra datos reales",
+        "Filtro All vs una release cumple las reglas de columnas",
+        "Retry vuelve a pedir la API"
+      ],
+      "dependencies": ["T6", "T9"],
+      "components": ["BoardScreen", "BoardColumn", "TaskCard"]
+    },
+    {
+      "id": "T11",
+      "title": "TaskActionDialog: mover, editar, borrar",
+      "spec": "Tap corto en TaskCard abre `TaskActionDialog`.\n- Mover: estados válidos (To-Do no ofrece IN_PROGRESS/READY/DONE). PATCH status (+ invariantes). Refresh board.\n- Editar: cierra diálogo y navega a TaskEditor (puede ser placeholder hasta T12).\n- Borrar: DELETE inmediato, cierra, refresh. Error de red: mensaje, la card no desaparece.",
+      "acceptance_criteria": [
+        "Tap abre el diálogo; long-press no hace nada",
+        "Mover cambia de columna vía API",
+        "Borrar es inmediato y refresca",
+        "To-Do no permite mover a In Progress/Ready/Done"
+      ],
+      "dependencies": ["T10"],
+      "components": ["TaskCard", "TaskActionDialog"]
+    },
+    {
+      "id": "T12",
+      "title": "TaskEditorScreen UI",
+      "spec": "Pantalla llena: campos title, description, status (5 valores), release (lista + opción sin release). Acciones Guardar y Eliminar (eliminar solo si hay id). Validación visual: no guardar title blank. Aún puedes no llamar API (submit no-op) si T13 lo cablea; preferible dejar callbacks listos.",
+      "acceptance_criteria": [
+        "No es un diálogo; ocupa el content del scaffold",
+        "Se puede elegir status y release o ninguna release",
+        "Eliminar no se muestra en modo crear"
+      ],
+      "dependencies": ["T8"],
+      "components": ["TaskEditorScreen"]
+    },
+    {
+      "id": "T13",
+      "title": "TaskEditor conectado (crear, editar, borrar)",
+      "spec": "FAB Nueva tarea y acción Editar del diálogo abren TaskEditorScreen.\nCrear: POST (sin release → To-Do; si el filtro del board es una release, preseleccionarla → Selected).\nEditar: GET opcional + PATCH. Quitar release → To-Do. Asignar release → Selected si no se elige otro status válido.\nEliminar: DELETE y pop. Title vacío no llama API. Tras éxito, volver al board y refrescar.",
+      "acceptance_criteria": [
+        "Se puede crear una tarea y verla en To-Do o Selected según release",
+        "Editar persiste title/description/status/release",
+        "Eliminar desde el editor quita la tarea"
+      ],
+      "dependencies": ["T11", "T12"],
+      "components": ["TaskEditorScreen", "BoardScreen"]
+    },
+    {
+      "id": "T14",
+      "title": "ReleaseListScreen",
+      "spec": "Lista GET /releases: nombre + notes. Vacío No releases. Loading/error+Retry. Tap → ReleaseEditor (placeholder ok hasta T15). Acción **Nueva release** en la top bar de esta pantalla, al lado del toggle de tema (no FAB). Botón Releases del scaffold lleva aquí desde el board.",
+      "acceptance_criteria": [
+        "La lista muestra releases del server",
+        "Nueva release está en la top bar, no como FAB",
+        "Estados loading/empty/error existen"
+      ],
+      "dependencies": ["T8", "T6"],
+      "components": ["ReleaseListScreen", "TaskItScaffold"]
+    },
+    {
+      "id": "T15",
+      "title": "ReleaseEditorScreen conectado",
+      "spec": "Pantalla llena name + notes, Guardar, Eliminar solo en edición.\nPOST/PATCH/DELETE. Name blank no guarda. DELETE 409: mensaje de error, no pop. Éxito: volver a la lista y refrescar. El filtro del board debe poder usar las releases nuevas.",
+      "acceptance_criteria": [
+        "CRUD de releases completo desde la UI",
+        "409 al borrar release con tasks se muestra y no navega atrás",
+        "Tras crear, aparece en la lista y en el filtro del board"
+      ],
+      "dependencies": ["T14"],
+      "components": ["ReleaseEditorScreen", "ReleaseListScreen"]
+    }
+  ]
+}

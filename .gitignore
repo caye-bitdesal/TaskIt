@@ -1,0 +1,54 @@
+# Cursor editor / local cursor data
+.cursor/
+.cursor/**
+
+# AI assistant tools / local caches / credential files
+# (examples — adapt to the actual filenames your tools create)
+.ai/
+.ai-cache/
+ai-cache/
+claude/
+claude_cache/
+claude_temp/
+anthropic/
+openai/
+openai/
+openai_config/
+openai_cache/
+assistant/
+assistant_cache/
+assistant_state/
+chat_history/
+generated_images/
+model_cache/
+tmp_ai/
+*.ai
+*.cache
+*.session
+*.token
+*.key
+*.pem
+
+# Common OS / IDE entries (if not already present)
+.DS_Store
+Thumbs.db
+.idea/
+*.iml
+.vscode/
+
+
+# Gradle build cache and local files
+.gradle/
+build/
+
+# Android/other local files
+local.properties
+
+# Kotlin/Java
+*.class
+*.log
+*.kotlin/
+
+# OS
+.DS_Store
+Thumbs.db
