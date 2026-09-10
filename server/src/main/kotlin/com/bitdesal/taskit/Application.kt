@@ -1,5 +1,7 @@
 package com.bitdesal.taskit
 
+import com.bitdesal.taskit.di.ServerGraph
+import dev.zacsweers.metro.createGraph
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
@@ -12,6 +14,8 @@ fun main() {
 }
 
 fun Application.module() {
+    val graph = createGraph<ServerGraph>()
+
     routing {
         get("/") {
             call.respondText(sayHello("Ktor"))

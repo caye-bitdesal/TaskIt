@@ -60,7 +60,12 @@ ktor-client-js = { module = "io.ktor:ktor-client-js", version.ref = "ktor" } # W
 ktor-client-cio-wasm-js = { module = "io.ktor:ktor-client-cio-wasm-js", version.ref = "ktor" } # Web Wasm
 ktor-client-darwin = { module = "io.ktor:ktor-client-darwin", version.ref = "ktor" } # iOS (el target sigue compilando aunque no haya app)
 wrappers-browser = { module = "org.jetbrains.kotlin-wrappers:kotlin-browser", version.ref = "kotlin-wrappers" }
+
+#SQLDelight
 sqldelight-sqliteDriver = { module = "app.cash.sqldelight:sqlite-driver", version.ref = "sqlDelight" }
+sqldelight-android = { module = "app.cash.sqldelight:android-driver", version.ref = "sqlDelight" }
+sqldelight-native = { module = "app.cash.sqldelight:native-driver", version.ref = "sqlDelight" }
+sqldelight-coroutines = { module = "app.cash.sqldelight:coroutines-extensions", version.ref = "sqlDelight" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

@@ -1,3 +1,34 @@
 CREATE TABLE Task (
-
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    description TEXT,
+    status TEXT NOT NULL,
+    releaseId INTEGER,
+    createdAt TEXT NOT NULL,
+    updatedAt TEXT NOT NULL,
+    FOREIGN KEY (releaseId) REFERENCES Release(id)
 );
+
+selectAll:
+SELECT * FROM Task;
+
+selectById:
+SELECT * FROM Task WHERE id = ?;
+
+insert:
+INSERT INTO Task(title, description, status, releaseId, createdAt, updatedAt)
+VALUES (?, ?, ?, ?, ?, ?);
+
+update:
+UPDATE Task
+SET title = ?, description = ?, status = ?, releaseId = ?, updatedAt = ?
+WHERE id = ?;
+
+delete:
+DELETE FROM Task WHERE id = ?;
+
+tasksByReleaseId:
+SELECT * FROM Task WHERE releaseId = ?;
+
+countTasksByReleaseId:
+SELECT count(*) FROM Task WHERE releaseId = ?;

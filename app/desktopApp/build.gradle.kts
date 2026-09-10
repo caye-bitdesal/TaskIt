@@ -11,7 +11,7 @@ dependencies {
 
     implementation(compose.desktop.currentOs)
     implementation(libs.kotlinx.coroutinesSwing)
-
+    implementation(libs.sqldelight.sqliteDriver)
     implementation(libs.compose.uiToolingPreview)
 }
 

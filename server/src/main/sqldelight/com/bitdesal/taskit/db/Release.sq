@@ -1,3 +1,23 @@
 CREATE TABLE Release (
-
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    notes TEXT
 );
+
+selectAll:
+SELECT * FROM Release;
+
+selectById:
+SELECT * FROM Release WHERE id = ?;
+
+insert:
+INSERT INTO Release(name, notes)
+VALUES (?, ?);
+
+update:
+UPDATE Release
+SET name = ?, notes = ?
+WHERE id = ?;
+
+delete:
+DELETE FROM Release WHERE id = ?;
