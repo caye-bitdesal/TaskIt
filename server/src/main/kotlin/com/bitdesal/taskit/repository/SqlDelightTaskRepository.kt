@@ -14,8 +14,16 @@ class SqlDelightTaskRepository(
     private val db: TaskItDatabase,
 ) : TaskRepository {
 
-    override fun list(): List<TaskDto> =
-        db.taskQueries.selectAll().executeAsList().map { it.toDto() }
+    override fun list(
+        releaseId: Long?,
+        status: TaskStatus?,
+    ): List<TaskDto> =
+        db.taskQueries.selectAll().executeAsList()
+            .map { it.toDto() }
+            .filter { task ->
+                (releaseId == null || task.releaseId == releaseId) &&
+                    (status == null || task.status == status)
+            }
 
     override fun get(id: Long): TaskDto? =
         db.taskQueries.selectById(id).executeAsOneOrNull()?.toDto()
@@ -44,21 +52,22 @@ class SqlDelightTaskRepository(
 
     override fun update(
         id: Long,
-        title: String?,
+        title: String,
         description: String?,
-        status: String?,
+        status: String,
         releaseId: Long?,
         updatedAt: String,
-    ) {
-        val current = db.taskQueries.selectById(id).executeAsOneOrNull() ?: return
+    ): TaskDto? {
+        if (db.taskQueries.selectById(id).executeAsOneOrNull() == null) return null
         db.taskQueries.update(
-            title ?: current.title,
-            description ?: current.description,
-            status ?: current.status,
-            releaseId ?: current.releaseId,
+            title,
+            description,
+            status,
+            releaseId,
             updatedAt,
             id,
         )
+        return get(id)
     }
 
     override fun delete(id: Long): Boolean =
