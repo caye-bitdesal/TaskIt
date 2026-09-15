@@ -31,5 +31,7 @@ dependencies {
     implementation(libs.ktor.serialization.kotlinx.json.jvm)
     implementation(libs.sqldelight.sqliteDriver)
     testImplementation(libs.ktor.serverTestHost)
+    testImplementation(libs.ktor.client.content.negotiation)
+    testImplementation(libs.ktor.client.cio)
     testImplementation(libs.kotlin.testJunit)
 }
