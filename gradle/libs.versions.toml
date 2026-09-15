@@ -47,6 +47,10 @@ logback = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
 ktor-serverCore = { module = "io.ktor:ktor-server-core-jvm", version.ref = "ktor" } # pipeline, routing, Application
 ktor-serverNetty = { module = "io.ktor:ktor-server-netty-jvm", version.ref = "ktor" } # motor HTTP del server
 ktor-serverTestHost = { module = "io.ktor:ktor-server-test-host-jvm", version.ref = "ktor" } # testApplication {}
+ktor-server-content-negotiation = { module = "io.ktor:ktor-server-content-negotiation-jvm", version.ref = "ktor" } # install(ContentNegotiation) para JSON en requests/responses
+ktor-server-cors = { module = "io.ktor:ktor-server-cors-jvm", version.ref = "ktor" } # CORS para Android/Web/Desktop en local
+ktor-server-status-pages = { module = "io.ktor:ktor-server-status-pages-jvm", version.ref = "ktor" } # 400/404/409 → ErrorBody
+ktor-serialization-kotlinx-json-jvm = { module = "io.ktor:ktor-serialization-kotlinx-json-jvm", version.ref = "ktor" } # json() de ContentNegotiation en :server
 
 # Ktor client (commonMain de :app:shared) — API REST del cliente tonto
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" } # HttpClient y API común KMP
