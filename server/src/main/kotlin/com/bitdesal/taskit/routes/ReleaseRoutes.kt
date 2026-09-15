@@ -36,37 +36,48 @@ class ReleaseRoutes(
                     HttpStatusCode.Created, 
                     repository.create(body.name, body.notes)
                 )
+            }
 
-                get("/{id}") { /* get(id) ?: 404 */ }
+            get("/{id}") {
+                val id = call.parameters["id"]?.toLong() ?: -1
+                val result = repository.get(id)
 
-                patch("/{id}") {
-                    val id = call.parameters["id"]?.toLong() ?: -1
-                    val body = call.receive<PatchReleaseRequest>()
-                    val updated = repository.update(id, body.name, body.notes)
-                    
-                    if (updated == null) {
-                        call.respond(HttpStatusCode.NotFound)
-                        return@patch
-                    } else {
-                        call.respond(updated)
-                    }
+                if (result == null) {
+                    call.respond(HttpStatusCode.NotFound)
+                    return@get
+                } else {
+                    call.respond(result)
                 }
-                
-                delete("/{id}") {
-                    val id = call.parameters["id"]?.toLong() ?: -1
-                    if (repository.get(id) == null) {
-                        call.respond(HttpStatusCode.NotFound)
-                        return@delete
-                    }
-                    
-                    if (repository.countTasks(id) > 0) {
-                        call.respond(HttpStatusCode.Conflict, ErrorBody("release has tasks"))
-                        return@delete
-                    }
-                    repository.delete(id)
-                    call.respond(HttpStatusCode.NoContent)
+            }
+
+            patch("/{id}") {
+                val id = call.parameters["id"]?.toLong() ?: -1
+                val body = call.receive<PatchReleaseRequest>()
+                val updated = repository.update(id, body.name, body.notes)
+
+                if (updated == null) {
+                    call.respond(HttpStatusCode.NotFound)
+                    return@patch
+                } else {
+                    call.respond(updated)
                 }
+            }
+
+            delete("/{id}") {
+                val id = call.parameters["id"]?.toLong() ?: -1
+                if (repository.get(id) == null) {
+                    call.respond(HttpStatusCode.NotFound)
+                    return@delete
+                }
+
+                if (repository.countTasks(id) > 0) {
+                    call.respond(HttpStatusCode.Conflict, ErrorBody("release has tasks"))
+                    return@delete
+                }
+                repository.delete(id)
+                call.respond(HttpStatusCode.NoContent)
             }
         }
     }
 }
+
