@@ -3,6 +3,7 @@ package com.bitdesal.taskit
 import com.bitdesal.taskit.api.CreateReleaseRequest
 import com.bitdesal.taskit.api.CreateTaskRequest
 import com.bitdesal.taskit.api.PatchReleaseRequest
+import com.bitdesal.taskit.api.PatchTaskRequest
 import com.bitdesal.taskit.domain.ErrorBody
 import com.bitdesal.taskit.domain.ReleaseDto
 import com.bitdesal.taskit.domain.TaskDto
@@ -17,6 +18,8 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.server.testing.testApplication
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.buildJsonObject
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -213,7 +216,7 @@ class ServerApiTest {
 
         val response = client.patch("/tasks/${created.id}") {
             contentType(ContentType.Application.Json)
-            setBody("""{"status":"IN_PROGRESS"}""")
+            setBody(PatchTaskRequest(status = TaskStatus.IN_PROGRESS))
         }
         assertEquals(HttpStatusCode.BadRequest, response.status)
         assertEquals(
@@ -237,7 +240,7 @@ class ServerApiTest {
 
         val response = client.patch("/tasks/${created.id}") {
             contentType(ContentType.Application.Json)
-            setBody("""{"releaseId":null}""")
+            setBody(buildJsonObject { put("releaseId", JsonNull) })
         }
         assertEquals(HttpStatusCode.OK, response.status)
         val body = response.body<TaskDto>()

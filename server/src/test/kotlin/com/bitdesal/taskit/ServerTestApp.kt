@@ -4,6 +4,7 @@ import com.bitdesal.taskit.db.createInMemorySqlDriver
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.testing.ApplicationTestBuilder
+import kotlinx.serialization.json.Json
 
 fun ApplicationTestBuilder.serverTestApp() {
     application {
@@ -12,5 +13,7 @@ fun ApplicationTestBuilder.serverTestApp() {
 }
 
 fun ApplicationTestBuilder.jsonClient() = createClient {
-    install(ContentNegotiation) { json() }
+    install(ContentNegotiation) {
+        json(Json { encodeDefaults = false })
+    }
 }

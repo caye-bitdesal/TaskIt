@@ -3,6 +3,7 @@ package com.bitdesal.taskit.db
 import app.cash.sqldelight.db.SqlDriver
 import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
 import java.util.Properties
+import java.util.UUID
 
 fun createSqlDriver(url: String = "jdbc:sqlite:taskit.db"): SqlDriver =
     JdbcSqliteDriver(
@@ -12,4 +13,4 @@ fun createSqlDriver(url: String = "jdbc:sqlite:taskit.db"): SqlDriver =
     )
 
 fun createInMemorySqlDriver(): SqlDriver =
-    createSqlDriver(JdbcSqliteDriver.IN_MEMORY)
+    createSqlDriver("jdbc:sqlite:file:${UUID.randomUUID()}?mode=memory&cache=shared")
