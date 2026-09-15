@@ -40,13 +40,7 @@ class ReleaseRoutes(
             }
 
             get("/{id}") {
-                val id = call.parameters["id"]?.toLongOrNull()
-                
-                if (id == null) {
-                    call.respond(HttpStatusCode.BadRequest)
-                    return@get
-                }
-                
+                val id = call.requireParam() ?: return@get
                 val result = repository.get(id)
 
                 if (result == null) {
@@ -58,13 +52,7 @@ class ReleaseRoutes(
             }
 
             patch("/{id}") {
-                val id = call.parameters["id"]?.toLongOrNull()
-
-                if (id == null) {
-                    call.respond(HttpStatusCode.BadRequest)
-                    return@patch
-                }
-                
+                val id = call.requireParam() ?: return@patch
                 val body = call.receive<PatchReleaseRequest>()
                 val result = repository.update(id, body.name, body.notes)
 
@@ -77,12 +65,8 @@ class ReleaseRoutes(
             }
 
             delete("/{id}") {
-                val id = call.parameters["id"]?.toLongOrNull()
-                if (id == null) {
-                    call.respond(HttpStatusCode.BadRequest)
-                    return@delete
-                }
-                
+                val id = call.requireParam() ?: return@delete
+
                 if (repository.get(id) == null) {
                     call.respond(HttpStatusCode.NotFound)
                     return@delete
