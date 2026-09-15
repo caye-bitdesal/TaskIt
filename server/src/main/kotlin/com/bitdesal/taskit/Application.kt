@@ -1,8 +1,10 @@
 package com.bitdesal.taskit
 
+import app.cash.sqldelight.db.SqlDriver
+import com.bitdesal.taskit.db.createSqlDriver
 import com.bitdesal.taskit.di.ServerGraph
 import com.bitdesal.taskit.domain.ErrorBody
-import dev.zacsweers.metro.createGraph
+import dev.zacsweers.metro.createGraphFactory
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
@@ -22,6 +24,10 @@ fun main() {
 }
 
 fun Application.module() {
+    testableModule(createSqlDriver())
+}
+
+fun Application.testableModule(driver: SqlDriver) {
     install(ContentNegotiation) {
         json()
     }
@@ -55,7 +61,10 @@ fun Application.module() {
         }
     }
 
-    val graph = createGraph<ServerGraph>()
+    val graph = createGraphFactory<ServerGraph.Factory>().create(driver)
+    monitor.subscribe(ApplicationStopped) {
+        driver.close()
+    }
 
     routing {
         with(graph.releaseRoutes) {
