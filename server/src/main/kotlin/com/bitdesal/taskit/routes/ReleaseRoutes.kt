@@ -32,6 +32,7 @@ class ReleaseRoutes(
                     )
                     return@post
                 }
+               
                 call.respond(
                     HttpStatusCode.Created, 
                     repository.create(body.name, body.notes)
@@ -39,32 +40,49 @@ class ReleaseRoutes(
             }
 
             get("/{id}") {
-                val id = call.parameters["id"]?.toLong() ?: -1
+                val id = call.parameters["id"]?.toLongOrNull()
+                
+                if (id == null) {
+                    call.respond(HttpStatusCode.BadRequest)
+                    return@get
+                }
+                
                 val result = repository.get(id)
 
                 if (result == null) {
                     call.respond(HttpStatusCode.NotFound)
                     return@get
-                } else {
-                    call.respond(result)
                 }
+                
+                call.respond(result)
             }
 
             patch("/{id}") {
-                val id = call.parameters["id"]?.toLong() ?: -1
-                val body = call.receive<PatchReleaseRequest>()
-                val updated = repository.update(id, body.name, body.notes)
+                val id = call.parameters["id"]?.toLongOrNull()
 
-                if (updated == null) {
+                if (id == null) {
+                    call.respond(HttpStatusCode.BadRequest)
+                    return@patch
+                }
+                
+                val body = call.receive<PatchReleaseRequest>()
+                val result = repository.update(id, body.name, body.notes)
+
+                if (result == null) {
                     call.respond(HttpStatusCode.NotFound)
                     return@patch
-                } else {
-                    call.respond(updated)
                 }
+                
+                call.respond(result)
             }
 
             delete("/{id}") {
-                val id = call.parameters["id"]?.toLong() ?: -1
+                val id = call.parameters["id"]?.toLongOrNull()
+                if (id == null) {
+                    call.respond(HttpStatusCode.BadRequest)
+                    return@delete
+                }
+                
                 if (repository.get(id) == null) {
                     call.respond(HttpStatusCode.NotFound)
                     return@delete
