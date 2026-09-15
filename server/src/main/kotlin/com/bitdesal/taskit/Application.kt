@@ -23,7 +23,11 @@ fun main() {
         .start(wait = true)
 }
 
-fun Application.module(driver: SqlDriver = createSqlDriver()) {
+fun Application.module() {
+    testableModule(createSqlDriver())
+}
+
+fun Application.testableModule(driver: SqlDriver) {
     install(ContentNegotiation) {
         json()
     }
@@ -58,6 +62,9 @@ fun Application.module(driver: SqlDriver = createSqlDriver()) {
     }
 
     val graph = createGraphFactory<ServerGraph.Factory>().create(driver)
+    monitor.subscribe(ApplicationStopped) {
+        driver.close()
+    }
 
     routing {
         with(graph.releaseRoutes) {

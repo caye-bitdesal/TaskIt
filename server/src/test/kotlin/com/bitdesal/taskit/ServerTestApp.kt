@@ -8,7 +8,7 @@ import kotlinx.serialization.json.Json
 
 fun ApplicationTestBuilder.serverTestApp() {
     application {
-        module(createInMemorySqlDriver())
+        testableModule(createInMemorySqlDriver())
     }
 }
 
