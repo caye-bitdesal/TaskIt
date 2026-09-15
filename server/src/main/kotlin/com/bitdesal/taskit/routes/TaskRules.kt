@@ -50,7 +50,12 @@ object TaskRules {
 
         val status = when {
             releaseId == null -> TaskStatus.TODO
-            releaseIdPresent && patchReleaseId != null && patchStatus == null -> TaskStatus.SELECTED
+            releaseIdPresent && patchReleaseId != null && patchStatus == null -> {
+                when (current.status) {
+                    TaskStatus.IN_PROGRESS, TaskStatus.READY, TaskStatus.DONE -> current.status
+                    else -> TaskStatus.SELECTED
+                }
+            }
             else -> patchStatus ?: current.status
         }
 

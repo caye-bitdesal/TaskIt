@@ -159,6 +159,70 @@ class TaskRoutesTest {
     }
 
     @Test
+    fun patchTaskChangingReleaseKeepsInProgressStatus() = testApplication {
+        taskTestApp()
+        val releaseA = releaseRepository.create("v1.0", null)
+        val releaseB = releaseRepository.create("v2.0", null)
+        val created = taskRepository.create(
+            title = "Working task",
+            description = "notes",
+            status = TaskStatus.IN_PROGRESS.name,
+            releaseId = releaseA.id,
+            createdAt = "t1",
+            updatedAt = "t1",
+        )
+
+        val response = jsonClient().patch("/tasks/${created.id}") {
+            contentType(ContentType.Application.Json)
+            setBody("""{"releaseId":${releaseB.id}}""")
+        }
+        assertEquals(HttpStatusCode.OK, response.status)
+        val body = response.body<TaskDto>()
+        assertEquals(TaskStatus.IN_PROGRESS, body.status)
+        assertEquals(releaseB.id, body.releaseId)
+    }
+
+    @Test
+    fun patchTaskCanClearDescription() = testApplication {
+        taskTestApp()
+        val created = taskRepository.create(
+            title = "Task",
+            description = "notes",
+            status = TaskStatus.TODO.name,
+            releaseId = null,
+            createdAt = "t1",
+            updatedAt = "t1",
+        )
+
+        val response = jsonClient().patch("/tasks/${created.id}") {
+            contentType(ContentType.Application.Json)
+            setBody("""{"description":null}""")
+        }
+        assertEquals(HttpStatusCode.OK, response.status)
+        assertNull(response.body<TaskDto>().description)
+    }
+
+    @Test
+    fun patchTaskIgnoresUnknownKeys() = testApplication {
+        taskTestApp()
+        val created = taskRepository.create(
+            title = "Task",
+            description = null,
+            status = TaskStatus.TODO.name,
+            releaseId = null,
+            createdAt = "t1",
+            updatedAt = "t1",
+        )
+
+        val response = jsonClient().patch("/tasks/${created.id}") {
+            contentType(ContentType.Application.Json)
+            setBody("""{"title":"Updated","extraField":"ignored"}""")
+        }
+        assertEquals(HttpStatusCode.OK, response.status)
+        assertEquals("Updated", response.body<TaskDto>().title)
+    }
+
+    @Test
     fun deleteTaskReturns204() = testApplication {
         taskTestApp()
         val created = taskRepository.create(

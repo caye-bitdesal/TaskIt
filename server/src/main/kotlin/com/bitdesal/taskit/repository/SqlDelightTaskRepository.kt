@@ -18,12 +18,10 @@ class SqlDelightTaskRepository(
         releaseId: Long?,
         status: TaskStatus?,
     ): List<TaskDto> =
-        db.taskQueries.selectAll().executeAsList()
-            .map { it.toDto() }
-            .filter { task ->
-                (releaseId == null || task.releaseId == releaseId) &&
-                    (status == null || task.status == status)
-            }
+        db.taskQueries.selectFiltered(
+            releaseId = releaseId,
+            status = status?.name,
+        ).executeAsList().map { it.toDto() }
 
     override fun get(id: Long): TaskDto? =
         db.taskQueries.selectById(id).executeAsOneOrNull()?.toDto()

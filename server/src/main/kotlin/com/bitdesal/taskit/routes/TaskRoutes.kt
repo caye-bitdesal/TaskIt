@@ -17,6 +17,7 @@ import io.ktor.server.routing.patch
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 import java.time.Instant
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.decodeFromJsonElement
@@ -100,7 +101,12 @@ class TaskRoutes @Inject constructor(
                 }
 
                 val json = call.receive<JsonObject>()
-                val body = Json.decodeFromJsonElement(PatchTaskRequest.serializer(), json)
+                val body = try {
+                    patchJson.decodeFromJsonElement(PatchTaskRequest.serializer(), json)
+                } catch (_: SerializationException) {
+                    call.respond(HttpStatusCode.BadRequest, ErrorBody("invalid request body"))
+                    return@patch
+                }
                 if (body.title?.isBlank() == true) {
                     call.respond(HttpStatusCode.BadRequest, ErrorBody("title is blank"))
                     return@patch
@@ -125,10 +131,13 @@ class TaskRoutes @Inject constructor(
                     return@patch
                 }
 
+                val title = if ("title" in json) body.title ?: current.title else current.title
+                val description = if ("description" in json) body.description else current.description
+
                 val updated = taskRepository.update(
                     id = id,
-                    title = body.title ?: current.title,
-                    description = body.description ?: current.description,
+                    title = title,
+                    description = description,
                     status = status.name,
                     releaseId = releaseId,
                     updatedAt = nowIso(),
@@ -153,4 +162,8 @@ class TaskRoutes @Inject constructor(
     }
 
     private fun nowIso(): String = Instant.now().toString()
+
+    private companion object {
+        val patchJson = Json { ignoreUnknownKeys = true }
+    }
 }
