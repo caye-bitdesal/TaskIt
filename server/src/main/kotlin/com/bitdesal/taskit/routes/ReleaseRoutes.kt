@@ -15,8 +15,7 @@ import io.ktor.server.routing.patch
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 
-@Inject
-class ReleaseRoutes(
+class ReleaseRoutes @Inject constructor(
     private val repository: ReleaseRepository
 ) {
     fun Route.register() {
@@ -32,41 +31,54 @@ class ReleaseRoutes(
                     )
                     return@post
                 }
+               
                 call.respond(
                     HttpStatusCode.Created, 
                     repository.create(body.name, body.notes)
                 )
+            }
 
-                get("/{id}") { /* get(id) ?: 404 */ }
+            get("/{id}") {
+                val id = call.requireParam() ?: return@get
+                val result = repository.get(id)
 
-                patch("/{id}") {
-                    val id = call.parameters["id"]?.toLong() ?: -1
-                    val body = call.receive<PatchReleaseRequest>()
-                    val updated = repository.update(id, body.name, body.notes)
-                    
-                    if (updated == null) {
-                        call.respond(HttpStatusCode.NotFound)
-                        return@patch
-                    } else {
-                        call.respond(updated)
-                    }
+                if (result == null) {
+                    call.respond(HttpStatusCode.NotFound)
+                    return@get
                 }
                 
-                delete("/{id}") {
-                    val id = call.parameters["id"]?.toLong() ?: -1
-                    if (repository.get(id) == null) {
-                        call.respond(HttpStatusCode.NotFound)
-                        return@delete
-                    }
-                    
-                    if (repository.countTasks(id) > 0) {
-                        call.respond(HttpStatusCode.Conflict, ErrorBody("release has tasks"))
-                        return@delete
-                    }
-                    repository.delete(id)
-                    call.respond(HttpStatusCode.NoContent)
+                call.respond(result)
+            }
+
+            patch("/{id}") {
+                val id = call.requireParam() ?: return@patch
+                val body = call.receive<PatchReleaseRequest>()
+                val result = repository.update(id, body.name, body.notes)
+
+                if (result == null) {
+                    call.respond(HttpStatusCode.NotFound)
+                    return@patch
                 }
+                
+                call.respond(result)
+            }
+
+            delete("/{id}") {
+                val id = call.requireParam() ?: return@delete
+
+                if (repository.get(id) == null) {
+                    call.respond(HttpStatusCode.NotFound)
+                    return@delete
+                }
+
+                if (repository.countTasks(id) > 0) {
+                    call.respond(HttpStatusCode.Conflict, ErrorBody("release has tasks"))
+                    return@delete
+                }
+                repository.delete(id)
+                call.respond(HttpStatusCode.NoContent)
             }
         }
     }
 }
+

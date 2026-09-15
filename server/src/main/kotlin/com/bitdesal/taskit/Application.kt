@@ -58,8 +58,8 @@ fun Application.module() {
     val graph = createGraph<ServerGraph>()
 
     routing {
-        get("/") {
-            call.respondText(sayHello("Ktor"))
+        with(graph.releaseRoutes) {
+            this@routing.register()
         }
     }
 }
