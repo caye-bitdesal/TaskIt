@@ -88,13 +88,13 @@ class TaskRoutesTest {
     }
 
     @Test
-    fun postTaskWithUnknownReleaseReturns404() = testApplication {
+    fun postTaskWithUnknownReleaseReturns400() = testApplication {
         taskTestApp()
         val response = jsonClient().post("/tasks") {
             contentType(ContentType.Application.Json)
             setBody(CreateTaskRequest(title = "Fix bug", releaseId = 999))
         }
-        assertEquals(HttpStatusCode.NotFound, response.status)
+        assertEquals(HttpStatusCode.BadRequest, response.status)
         assertEquals("release not found", response.body<ErrorBody>().error)
     }
 
@@ -126,13 +126,56 @@ class TaskRoutesTest {
 
         val response = jsonClient().patch("/tasks/${created.id}") {
             contentType(ContentType.Application.Json)
-            setBody(PatchTaskRequest(status = TaskStatus.IN_PROGRESS))
+            setBody("""{"status":"IN_PROGRESS"}""")
         }
         assertEquals(HttpStatusCode.BadRequest, response.status)
         assertEquals(
             "status IN_PROGRESS requires a release",
             response.body<ErrorBody>().error,
         )
+    }
+
+    @Test
+    fun patchTaskSelectedWithoutReleaseReturns400() = testApplication {
+        taskTestApp()
+        val created = taskRepository.create(
+            title = "Todo task",
+            description = null,
+            status = TaskStatus.TODO.name,
+            releaseId = null,
+            createdAt = "t1",
+            updatedAt = "t1",
+        )
+
+        val response = jsonClient().patch("/tasks/${created.id}") {
+            contentType(ContentType.Application.Json)
+            setBody("""{"status":"SELECTED"}""")
+        }
+        assertEquals(HttpStatusCode.BadRequest, response.status)
+        assertEquals(
+            "status SELECTED requires a release",
+            response.body<ErrorBody>().error,
+        )
+    }
+
+    @Test
+    fun patchTaskWithNullTitleReturns400() = testApplication {
+        taskTestApp()
+        val created = taskRepository.create(
+            title = "Task",
+            description = null,
+            status = TaskStatus.TODO.name,
+            releaseId = null,
+            createdAt = "t1",
+            updatedAt = "t1",
+        )
+
+        val response = jsonClient().patch("/tasks/${created.id}") {
+            contentType(ContentType.Application.Json)
+            setBody("""{"title":null}""")
+        }
+        assertEquals(HttpStatusCode.BadRequest, response.status)
+        assertEquals("title cannot be null", response.body<ErrorBody>().error)
     }
 
     @Test

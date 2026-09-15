@@ -5,6 +5,7 @@ import com.bitdesal.taskit.domain.TaskStatus
 
 object TaskRules {
     private val statusesRequiringRelease = setOf(
+        TaskStatus.SELECTED,
         TaskStatus.IN_PROGRESS,
         TaskStatus.READY,
         TaskStatus.DONE,
@@ -19,15 +20,7 @@ object TaskRules {
     }
 
     fun resolveForCreate(releaseId: Long?, status: TaskStatus?): Pair<TaskStatus, Long?> {
-        if (releaseId == null) {
-            val resolvedStatus = status ?: TaskStatus.TODO
-            if (resolvedStatus != TaskStatus.TODO) {
-                throw IllegalArgumentException("status $resolvedStatus requires a release")
-            }
-            return TaskStatus.TODO to null
-        }
-
-        val resolvedStatus = status ?: TaskStatus.SELECTED
+        val resolvedStatus = status ?: if (releaseId == null) TaskStatus.TODO else TaskStatus.SELECTED
         validateStatusAndRelease(resolvedStatus, releaseId)
         return resolvedStatus to releaseId
     }

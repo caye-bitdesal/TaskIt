@@ -57,7 +57,7 @@ class TaskRoutes @Inject constructor(
 
                 val createReleaseId = body.releaseId
                 if (createReleaseId != null && releaseRepository.get(createReleaseId) == null) {
-                    call.respond(HttpStatusCode.NotFound, ErrorBody("release not found"))
+                    call.respond(HttpStatusCode.BadRequest, ErrorBody("release not found"))
                     return@post
                 }
 
@@ -107,6 +107,10 @@ class TaskRoutes @Inject constructor(
                     call.respond(HttpStatusCode.BadRequest, ErrorBody("invalid request body"))
                     return@patch
                 }
+                if ("title" in json && body.title == null) {
+                    call.respond(HttpStatusCode.BadRequest, ErrorBody("title cannot be null"))
+                    return@patch
+                }
                 if (body.title?.isBlank() == true) {
                     call.respond(HttpStatusCode.BadRequest, ErrorBody("title is blank"))
                     return@patch
@@ -115,7 +119,7 @@ class TaskRoutes @Inject constructor(
                 val releaseIdPresent = "releaseId" in json
                 val patchReleaseId = body.releaseId
                 if (patchReleaseId != null && releaseRepository.get(patchReleaseId) == null) {
-                    call.respond(HttpStatusCode.NotFound, ErrorBody("release not found"))
+                    call.respond(HttpStatusCode.BadRequest, ErrorBody("release not found"))
                     return@patch
                 }
 
@@ -131,7 +135,7 @@ class TaskRoutes @Inject constructor(
                     return@patch
                 }
 
-                val title = if ("title" in json) body.title ?: current.title else current.title
+                val title = if ("title" in json) body.title!! else current.title
                 val description = if ("description" in json) body.description else current.description
 
                 val updated = taskRepository.update(
