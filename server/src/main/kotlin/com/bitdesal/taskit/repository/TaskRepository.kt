@@ -1,10 +1,10 @@
 package com.bitdesal.taskit.repository
 
-import com.bitdesal.taskit.db.Task
 import com.bitdesal.taskit.domain.TaskDto
+import com.bitdesal.taskit.domain.TaskStatus
 
 interface TaskRepository {
-    fun list(): List<TaskDto>
+    fun list(releaseId: Long? = null, status: TaskStatus? = null): List<TaskDto>
     fun get(id: Long): TaskDto?
     fun listByRelease(releaseId: Long): List<TaskDto>
     fun create(
@@ -17,11 +17,11 @@ interface TaskRepository {
     ): TaskDto
     fun update(
         id: Long,
-        title: String?,
+        title: String,
         description: String?,
-        status: String?,
+        status: String,
         releaseId: Long?,
         updatedAt: String,
-    )
+    ): TaskDto?
     fun delete(id: Long): Boolean
 }

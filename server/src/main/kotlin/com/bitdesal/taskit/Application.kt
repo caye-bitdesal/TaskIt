@@ -61,5 +61,8 @@ fun Application.module() {
         with(graph.releaseRoutes) {
             this@routing.register()
         }
+        with(graph.taskRoutes) {
+            this@routing.register()
+        }
     }
 }

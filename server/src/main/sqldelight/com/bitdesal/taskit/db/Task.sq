@@ -12,6 +12,11 @@ CREATE TABLE Task (
 selectAll:
 SELECT * FROM Task;
 
+selectFiltered:
+SELECT * FROM Task
+WHERE (:releaseId IS NULL OR releaseId = :releaseId)
+AND (:status IS NULL OR status = :status);
+
 selectById:
 SELECT * FROM Task WHERE id = ?;
 
