@@ -15,8 +15,7 @@ import io.ktor.server.routing.patch
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 
-@Inject
-class ReleaseRoutes(
+class ReleaseRoutes @Inject constructor(
     private val repository: ReleaseRepository
 ) {
     fun Route.register() {
