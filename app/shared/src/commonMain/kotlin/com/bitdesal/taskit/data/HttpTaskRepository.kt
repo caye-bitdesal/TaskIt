@@ -21,21 +21,21 @@ class HttpTaskRepository @Inject constructor(
     private val client: HttpClient,
 ) : TaskRepository {
     override suspend fun list(releaseId: Long?, status: TaskStatus?): List<TaskDto> =
-        client.get("/tasks") {
+        client.get("tasks") {
             releaseId?.let { parameter("releaseId", it) }
             status?.let { parameter("status", it.name) }
         }.body()
 
     override suspend fun get(id: Long): TaskDto =
-        client.get("/tasks/$id").body()
+        client.get("tasks/$id").body()
 
     override suspend fun create(request: CreateTaskRequest): TaskDto =
-        client.post("/tasks") { setBody(request) }.body()
+        client.post("tasks") { setBody(request) }.body()
 
     override suspend fun update(id: Long, request: PatchTaskRequest): TaskDto =
-        client.patch("/tasks/$id") { setBody(request) }.body()
+        client.patch("tasks/$id") { setBody(request) }.body()
 
     override suspend fun delete(id: Long) {
-        client.delete("/tasks/$id")
+        client.delete("tasks/$id")
     }
 }

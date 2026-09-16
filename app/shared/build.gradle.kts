@@ -1,3 +1,4 @@
+import com.codingfeline.buildkonfig.compiler.FieldSpec.Type.STRING
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
@@ -8,6 +9,7 @@ plugins {
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.kotlinSerialization)
     alias(libs.plugins.metro)
+    alias(libs.plugins.buildkonfig)
 }
 
 kotlin {
@@ -104,52 +106,22 @@ val debugApiUrl = providers.gradleProperty("taskit.api.url.debug")
 val debugAndroidApiUrl = providers.gradleProperty("taskit.api.url.debug.android")
     .orElse("http://10.0.2.2:8080")
 
-fun apiBaseUrl(platform: String): Provider<String> = taskitEnv.flatMap { env ->
-    val production = env.equals("release", ignoreCase = true) ||
-        env.equals("prod", ignoreCase = true)
-    when {
-        production -> releaseApiUrl
-        platform == "android" -> debugAndroidApiUrl
-        else -> debugApiUrl
+val isProductionEnv = taskitEnv.get().equals("release", ignoreCase = true) ||
+    taskitEnv.get().equals("prod", ignoreCase = true)
+val defaultBaseUrl = if (isProductionEnv) releaseApiUrl.get() else debugApiUrl.get()
+val androidBaseUrl = if (isProductionEnv) releaseApiUrl.get() else debugAndroidApiUrl.get()
+
+buildkonfig {
+    packageName = "com.bitdesal.taskit.config"
+    objectName = "AppConfig"
+
+    defaultConfigs {
+        buildConfigField(STRING, "BASE_URL", defaultBaseUrl)
     }
-}
 
-fun registerAppConfigActual(sourceSetName: String, platform: String): TaskProvider<Task> {
-    val outputDir = layout.buildDirectory.dir("generated/appconfig/$sourceSetName")
-    val baseUrl = apiBaseUrl(platform)
-    val task = tasks.register("generateAppConfig${sourceSetName.replaceFirstChar { it.uppercase() }}") {
-        group = "build"
-        description = "Generates AppConfig.BASE_URL for $sourceSetName"
-        inputs.property("baseUrl", baseUrl)
-        outputs.dir(outputDir)
-        val output = outputDir
-        val url = baseUrl
-        doLast {
-            val packageDir = output.get().asFile.resolve("com/bitdesal/taskit/config")
-            packageDir.mkdirs()
-            val literal = url.get()
-                .replace("\\", "\\\\")
-                .replace("\"", "\\\"")
-                .replace("\$", "\\\$")
-            packageDir.resolve("AppConfig.kt").writeText(
-                """
-                package com.bitdesal.taskit.config
-
-                internal actual object AppConfig {
-                    actual val BASE_URL: String = "$literal"
-                }
-
-                """.trimIndent() + "\n",
-            )
+    targetConfigs {
+        create("android") {
+            buildConfigField(STRING, "BASE_URL", androidBaseUrl)
         }
     }
-    kotlin.sourceSets.named(sourceSetName) {
-        kotlin.srcDir(task)
-    }
-    return task
 }
-
-registerAppConfigActual("androidMain", "android")
-registerAppConfigActual("jvmMain", "jvm")
-registerAppConfigActual("jsMain", "js")
-registerAppConfigActual("wasmJsMain", "wasmJs")

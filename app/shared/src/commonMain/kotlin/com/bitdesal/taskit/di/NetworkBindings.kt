@@ -8,6 +8,9 @@ import dev.zacsweers.metro.SingleIn
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
+import io.ktor.http.ContentType
+import io.ktor.http.Url
+import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 
@@ -35,7 +38,16 @@ object NetworkBindings {
             json(json)
         }
         defaultRequest {
-            url(baseUrl)
+            val parsed = Url(baseUrl)
+            url {
+                protocol = parsed.protocol
+                host = parsed.host
+                port = parsed.port
+                if (parsed.pathSegments.isNotEmpty()) {
+                    pathSegments = parsed.pathSegments
+                }
+            }
+            contentType(ContentType.Application.Json)
         }
     }
 }
