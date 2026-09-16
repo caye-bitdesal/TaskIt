@@ -17,8 +17,7 @@ import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 
 @SingleIn(AppScope::class)
-@Inject
-class HttpTaskRepository(
+class HttpTaskRepository @Inject constructor(
     private val client: HttpClient,
 ) : TaskRepository {
     override suspend fun list(releaseId: Long?, status: TaskStatus?): List<TaskDto> =

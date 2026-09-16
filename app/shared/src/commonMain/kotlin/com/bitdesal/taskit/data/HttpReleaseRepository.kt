@@ -15,8 +15,7 @@ import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 
 @SingleIn(AppScope::class)
-@Inject
-class HttpReleaseRepository(
+class HttpReleaseRepository @Inject constructor(
     private val client: HttpClient,
 ) : ReleaseRepository {
     override suspend fun list(): List<ReleaseDto> =
