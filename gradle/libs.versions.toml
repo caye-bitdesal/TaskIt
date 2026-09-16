@@ -19,6 +19,7 @@ ktor = "3.5.2"
 logback = "1.6.3"
 material3 = "1.11.0-alpha07"
 metro = "1.4.3"
+buildkonfig = "0.22.0"
 sqlDelight = "2.3.2"
 
 [libraries]
@@ -81,4 +82,5 @@ kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref =
 kotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 ktor = { id = "io.ktor.plugin", version.ref = "ktor" }
 metro = { id = "dev.zacsweers.metro", version.ref = "metro" }
+buildkonfig = { id = "com.codingfeline.buildkonfig", version.ref = "buildkonfig" }
 sqldelight = { id = "app.cash.sqldelight", version.ref = "sqlDelight" }
