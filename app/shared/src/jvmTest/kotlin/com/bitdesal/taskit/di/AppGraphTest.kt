@@ -1,8 +1,10 @@
 package com.bitdesal.taskit.di
 
+import com.bitdesal.taskit.config.AppConfig
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 class AppGraphTest {
     @Test
@@ -12,7 +14,8 @@ class AppGraphTest {
             assertNotNull(graph.httpClient)
             assertNotNull(graph.releaseRepository)
             assertNotNull(graph.taskRepository)
-            assertEquals("http://127.0.0.1:8080", graph.baseUrl)
+            assertTrue(graph.baseUrl.isNotBlank(), "baseUrl must be configured")
+            assertEquals(AppConfig.BASE_URL, graph.baseUrl)
         } finally {
             graph.httpClient.close()
         }
