@@ -26,7 +26,6 @@ import com.bitdesal.taskit.domain.TaskStatus
 private val NarrowBoardWidth = 720.dp
 private val BoardColumnMinWidth = 260.dp
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BoardScreen(
     modifier: Modifier = Modifier,
