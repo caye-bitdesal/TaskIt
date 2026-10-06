@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.bitdesal.taskit.di.AppGraph
 import com.bitdesal.taskit.ui.TaskItScaffold
+import com.bitdesal.taskit.ui.board.BoardScreen
 import com.bitdesal.taskit.ui.navigation.AppRoute
 import dev.zacsweers.metro.createGraph
 
@@ -51,17 +52,24 @@ fun App() {
                 darkThemeOverride = !effectiveDark
             },
         ) { innerPadding ->
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding),
-                contentAlignment = Alignment.Center,
-            ) {
-                when (route) {
-                    AppRoute.Board -> Text("Board")
-                    AppRoute.ReleaseList -> Text("Release list")
-                    AppRoute.ReleaseEditor -> Text("Release editor")
-                    AppRoute.TaskEditor -> Text("Task editor")
+            when (route) {
+                AppRoute.Board -> BoardScreen(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding),
+                )
+                else -> Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    when (route) {
+                        AppRoute.ReleaseList -> Text("Release list")
+                        AppRoute.ReleaseEditor -> Text("Release editor")
+                        AppRoute.TaskEditor -> Text("Task editor")
+                        AppRoute.Board -> Unit
+                    }
                 }
             }
         }
