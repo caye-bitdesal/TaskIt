@@ -1,0 +1,32 @@
+version: 2
+updates:
+  - package-ecosystem: gradle
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      gradle:
+        patterns:
+          - "*"
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+
+  # Kotlin/JS & Wasm: yarn.lock under kotlin-js-store (no package.json; regenerated via Gradle)
+  - package-ecosystem: npm
+    directories:
+      - /kotlin-js-store
+      - /kotlin-js-store/wasm
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 0
+    groups:
+      kotlin-js-store:
+        patterns:
+          - "*"
